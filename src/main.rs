@@ -36,17 +36,12 @@ fn main() {
 
     let mut commands = create_commands_vector(&user, &nodes_vec, &command);
 
-//    let mut threads = Vec::new();
-
-    // for c in &mut commands {
-    //     threads.push(thread::spawn(move || {
-    //         c.run();
-    //     }));
-    // }
-
-    // for t in threads {
-    //     let _ = t.join();
-    // }
+    for cmd in &mut commands {
+        match cmd.run() {
+            Ok(_) => println!("Command result: {}", cmd.stdout),
+            Err(_) => println!("Error in command: {}", cmd.stderr),
+        }
+    }
 
     println!("Done");
 }
