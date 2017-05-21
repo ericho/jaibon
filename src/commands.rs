@@ -1,8 +1,7 @@
 use std;
-use std::marker::PhantomData;
 
 pub enum CommandErrors {
-    RuntimeError
+    RuntimeError,
 }
 
 pub type CommandResult = Result<(), CommandErrors>;
@@ -11,22 +10,24 @@ pub struct Command {
     command: String,
     pub stdout: String,
     pub stderr: String,
-    node: String,
-    user: String
+    pub node: String,
+    user: String,
+    pub result: CommandResult,
 }
 
 impl Command {
-    pub fn new(user: &str, node: &str, command: &str) -> Command {
+    pub fn new(user: String, node: &str, command: String) -> Command {
         Command {
-            command: command.to_string(),
-            user: user.to_string(),
+            command: command,
+            user: user,
             node: node.to_string(),
             stdout: String::new(),
-            stderr: String::new()
+            stderr: String::new(),
+            result: Ok(()),
         }
     }
 
-    pub fn run(&mut self) -> CommandResult {
+    pub fn run(&mut self) {
         let cmd = self.create_scp_command();
         let s_cmd: Vec<&str> = cmd.split(' ').collect();
         let output = std::process::Command::new(&s_cmd[0])
@@ -41,9 +42,9 @@ impl Command {
         self.stderr.push_str(tmp);
 
         if output.status.success() {
-            Ok(())
+            self.result = Ok(());
         } else {
-            Err(CommandErrors::RuntimeError)
+            self.result = Err(CommandErrors::RuntimeError);
         }
     }
 

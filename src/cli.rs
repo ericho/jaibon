@@ -1,4 +1,4 @@
-use clap::{App,Arg};
+use clap::{App, Arg};
 
 
 // The intended usage of this program is

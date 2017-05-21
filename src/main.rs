@@ -6,40 +6,49 @@ mod commands;
 use std::env;
 use std::thread;
 use commands::Command;
-use commands::CommandErrors;
 
-fn create_nodes_vector(nodes: &str) -> Vec<&str> {
-    let v: Vec<&str> = nodes.split(',').map(|x| x.trim()).collect();
-    v
-}
-
-fn create_commands_vector(user: &str,
-                          nodes_vec: &Vec<&str>,
-                          command: &str) -> Vec<Command> {
-    let mut vectors: Vec<Command> = Vec::new();
-    for x in nodes_vec {
-        vectors.push(Command::new(user, x, command));
+fn create_nodes_vector(nodes: &str) -> Vec<String> {
+    let v: Vec<&str> = nodes.split(',')
+        .map(|x| x.trim())
+        .collect();
+    let mut nodes_vec: Vec<String> = Vec::with_capacity(v.len());
+    for node in v {
+        nodes_vec.push(node.to_string());
     }
-    vectors
+    nodes_vec
 }
 
 fn main() {
     let cli = cli::create_cli().get_matches();
 
     let current_user = env::var("USER").unwrap();
-    let user = cli.value_of("user").unwrap_or_else(|| current_user.as_str());
-
+    let user = cli.value_of("user")
+        .unwrap_or_else(|| current_user.as_str())
+        .to_owned();
     let nodes = cli.value_of("nodes").unwrap();
-    let command = cli.value_of("command").unwrap();
+    let command = cli.value_of("command").unwrap().to_owned();
 
     let nodes_vec = create_nodes_vector(nodes);
 
-    let mut commands = create_commands_vector(&user, &nodes_vec, &command);
+    let mut thread_handlers = Vec::with_capacity(nodes_vec.len());
 
-    for cmd in &mut commands {
-        match cmd.run() {
-            Ok(_) => println!("Command result: {}", cmd.stdout),
-            Err(_) => println!("Error in command: {}", cmd.stderr),
+    for i in nodes_vec {
+        let theuser = user.clone();
+        let thecmd = command.clone();
+        thread_handlers.push(thread::spawn(move || {
+            println!("Launching command on node {}", i);
+            let mut cmd = Command::new(theuser.to_owned(), &i, thecmd.to_owned());
+            cmd.run();
+            cmd
+        }));
+    }
+
+    for t in thread_handlers {
+        let cmd = t.join().unwrap();
+        println!("==== {} ====", cmd.node);
+        match cmd.result {
+            Ok(_) => println!("Command result:\n{}", cmd.stdout),
+            Err(_) => println!("Error in command:\n{}", cmd.stderr),
         }
     }
 

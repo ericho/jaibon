@@ -38,9 +38,11 @@ This project is under development and it doesn't have a formal release, the inst
     * Run `cargo install`
     * Execute `jaibon`
     
+## Demo
+![demo](demo.png)
 ## TODO
 
-- [ ] Launch threads instead of loop execution.
+- [x] Launch threads instead of loop execution.
 - [ ] Refactor on structures, a lot of ugly code.
 - [ ] Support of hostlist format
 
