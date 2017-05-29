@@ -8,7 +8,7 @@ use std::thread;
 use commands::Command;
 
 fn create_nodes_vector(nodes: &str) -> Vec<String> {
-    let v: Vec<&str> = nodes.split(',')
+    let v: Vec<&str> = nodes.split_terminator(',')
         .map(|x| x.trim())
         .collect();
     let mut nodes_vec: Vec<String> = Vec::with_capacity(v.len());
@@ -92,5 +92,19 @@ mod tests {
         let r = create_nodes_vector("node1,      node2,    node3     ,node4");
         assert_eq!(4, r.len());
         assert_eq!(r, ["node1", "node2", "node3", "node4"]);
+    }
+
+    #[test]
+    fn create_nodes_vector_trailing_comma() {
+        let r = create_nodes_vector("node1,");
+        assert_eq!(1, r.len());
+        assert_eq!(r, ["node1"]);
+    }
+
+    #[test]
+    fn create_nodes_vector_trailing_2_comma() {
+        let r = create_nodes_vector("node1,node2");
+        assert_eq!(2, r.len());
+        assert_eq!(r, ["node1", "node2"]);
     }
 }
