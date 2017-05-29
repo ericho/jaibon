@@ -45,11 +45,7 @@ fn main() {
 
     for t in thread_handlers {
         let cmd = t.join().unwrap();
-        println!("==== {} ====", cmd.node);
-        match cmd.result {
-            Ok(_) => println!("Command result:\n{}", cmd.stdout),
-            Err(_) => println!("Error in command:\n{}", cmd.stderr),
-        }
+        println!("{}", cmd);
     }
 
     println!("Done");
@@ -103,7 +99,7 @@ mod tests {
 
     #[test]
     fn create_nodes_vector_trailing_2_comma() {
-        let r = create_nodes_vector("node1,node2");
+        let r = create_nodes_vector("node1,node2,");
         assert_eq!(2, r.len());
         assert_eq!(r, ["node1", "node2"]);
     }

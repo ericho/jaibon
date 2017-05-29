@@ -1,7 +1,12 @@
 use std;
+use std::fmt;
 
 pub enum CommandErrors {
     RuntimeError,
+}
+
+pub enum CommandPrinter {
+    DefaultPrinter,
 }
 
 pub type CommandResult = Result<(), CommandErrors>;
@@ -13,6 +18,7 @@ pub struct Command {
     pub node: String,
     user: String,
     pub result: CommandResult,
+    pub printer: CommandPrinter,
 }
 
 impl Command {
@@ -24,6 +30,7 @@ impl Command {
             stdout: String::new(),
             stderr: String::new(),
             result: Ok(()),
+            printer: CommandPrinter::DefaultPrinter,
         }
     }
 
@@ -51,5 +58,42 @@ impl Command {
     fn create_scp_command(&self) -> String {
         let s = format!("ssh {}@{} {}", self.user, self.node, self.command);
         s
+    }
+
+    fn default_formatter(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let status = match self.result {
+            Ok(_) => "ok",
+            Err(_) => "error",
+        };
+        write!(f, "==== Command '{}' in node '{}' ====\n\
+                   Status : {}\nStdout : \n{}\nStderr : \n{}\n",
+               self.command,
+               self.node,
+               status,
+               self.stdout,
+               self.stderr)
+    }
+
+}
+
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.printer {
+            CommandPrinter::DefaultPrinter => self.default_formatter(f),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_formatter() {
+        let c = Command::new("user".to_owned(),
+                             "node",
+                             "command".to_owned());
+        assert_eq!("==== Command 'command' in node 'node' ====\nStatus : ok\
+                   \nStdout : \n\nStderr : \n\n", format!("{}", c));
     }
 }
