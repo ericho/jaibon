@@ -5,3 +5,7 @@ authors = ["Erich Cordoba <erich.cm@yandex.com>"]
 
 [dependencies]
 clap = "2.24.1"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []

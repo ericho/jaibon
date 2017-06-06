@@ -1,3 +1,7 @@
+#![cfg_attr(feature="clippy", allow(unstable_features))]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate clap;
 
 mod cli;
@@ -8,9 +12,7 @@ use std::thread;
 use commands::Command;
 
 fn create_nodes_vector(nodes: &str) -> Vec<String> {
-    let v: Vec<&str> = nodes.split_terminator(',')
-        .map(|x| x.trim())
-        .collect();
+    let v: Vec<&str> = nodes.split_terminator(',').map(|x| x.trim()).collect();
     let mut nodes_vec: Vec<String> = Vec::with_capacity(v.len());
     for node in v {
         nodes_vec.push(node.to_string());
@@ -36,11 +38,13 @@ fn main() {
         let theuser = user.clone();
         let thecmd = command.clone();
         thread_handlers.push(thread::spawn(move || {
-            println!("Launching command on node {}", i);
-            let mut cmd = Command::new(theuser.to_owned(), &i, thecmd.to_owned());
-            cmd.run();
-            cmd
-        }));
+                                               println!("Launching command on node {}", i);
+                                               let mut cmd = Command::new(theuser.to_owned(),
+                                                                          &i,
+                                                                          thecmd.to_owned());
+                                               cmd.run();
+                                               cmd
+                                           }));
     }
 
     for t in thread_handlers {

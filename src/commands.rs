@@ -65,7 +65,8 @@ impl Command {
             Ok(_) => "ok",
             Err(_) => "error",
         };
-        write!(f, "==== Command '{}' in node '{}' ====\n\
+        write!(f,
+               "==== Command '{}' in node '{}' ====\n\
                    Status : {}\nStdout : \n{}\nStderr : \n{}\n",
                self.command,
                self.node,
@@ -73,7 +74,6 @@ impl Command {
                self.stdout,
                self.stderr)
     }
-
 }
 
 impl fmt::Display for Command {
@@ -90,10 +90,9 @@ mod tests {
 
     #[test]
     fn check_formatter() {
-        let c = Command::new("user".to_owned(),
-                             "node",
-                             "command".to_owned());
+        let c = Command::new("user".to_owned(), "node", "command".to_owned());
         assert_eq!("==== Command 'command' in node 'node' ====\nStatus : ok\
-                   \nStdout : \n\nStderr : \n\n", format!("{}", c));
+                   \nStdout : \n\nStderr : \n\n",
+                   format!("{}", c));
     }
 }
