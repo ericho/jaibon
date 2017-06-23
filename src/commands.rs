@@ -22,11 +22,11 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new(user: String, node: &str, command: String) -> Command {
+    pub fn new(user: String, node: String, command: String) -> Command {
         Command {
             command: command,
             user: user,
-            node: node.to_string(),
+            node: node,
             stdout: String::new(),
             stderr: String::new(),
             result: Ok(()),
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn check_formatter() {
-        let c = Command::new("user".to_owned(), "node", "command".to_owned());
+        let c = Command::new("user".to_owned(), "node".to_owned(), "command".to_owned());
         assert_eq!("==== Command 'command' in node 'node' ====\nStatus : ok\
                    \nStdout : \n\nStderr : \n\n",
                    format!("{}", c));

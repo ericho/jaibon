@@ -1,15 +1,19 @@
-#![cfg_attr(feature="clippy", allow(unstable_features))]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", allow(unstable_features))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 
 extern crate clap;
+extern crate threadpool;
+extern crate num_cpus;
 
 mod cli;
 mod commands;
 
 use std::env;
-use std::thread;
+use std::sync::mpsc::channel;
+use threadpool::ThreadPool;
 use commands::Command;
+
 
 fn create_nodes_vector(nodes: &str) -> Vec<String> {
     let v: Vec<&str> = nodes.split_terminator(',').map(|x| x.trim()).collect();
@@ -31,27 +35,29 @@ fn main() {
     let command = cli.value_of("command").unwrap().to_owned();
 
     let nodes_vec = create_nodes_vector(nodes);
+    let nodes_count = nodes_vec.len();
 
-    let mut thread_handlers = Vec::with_capacity(nodes_vec.len());
+    let num_cpus = num_cpus::get();
+
+    let (tx, rx) = channel();
+    let pool = ThreadPool::new(num_cpus);
 
     for i in nodes_vec {
-        let theuser = user.clone();
-        let thecmd = command.clone();
-        thread_handlers.push(thread::spawn(move || {
-                                               println!("Launching command on node {}", i);
-                                               let mut cmd = Command::new(theuser.to_owned(),
-                                                                          &i,
-                                                                          thecmd.to_owned());
-                                               cmd.run();
-                                               cmd
-                                           }));
+        let user = user.clone();
+        let command = command.clone();
+        let tx = tx.clone();
+        pool.execute(move || {
+                         println!("Launching command on node {}", i);
+                         let mut cmd =
+                             Command::new(user.to_string(), i.to_string(), command.to_string());
+                         cmd.run();
+                         tx.send(cmd).unwrap();
+                     });
     }
 
-    for t in thread_handlers {
-        let cmd = t.join().unwrap();
-        println!("{}", cmd);
+    for t in rx.iter().take(nodes_count) {
+        println!("{}", t);
     }
-
     println!("Done");
 }
 
