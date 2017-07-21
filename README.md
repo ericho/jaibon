@@ -1,7 +1,7 @@
 # Jaibon
 ## A pdsh clon written in Rust
 
-[![Build Status](https://travis-ci.org/ericho/jaibon.svg?branch=master)](https://travis-ci.org/ericho/jaibon)
+[![Build Status](https://travis-ci.org/ericho/jaibon.svg?branch=master)](https://travis-ci.org/ericho/jaibon) [![Coverage Status](https://coveralls.io/repos/github/ericho/jaibon/badge.svg?branch=master)](https://coveralls.io/github/ericho/jaibon?branch=master)
 
 This is just a little pet project to learn Rust. The intention is to support the concurrent command execution in cluster environments, more specifically on HPC systems. 
 
