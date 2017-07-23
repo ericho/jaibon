@@ -27,35 +27,35 @@ fn create_nodes_vector(nodes: &str) -> Vec<String> {
 fn main() {
     let cli = cli::create_cli().get_matches();
 
-    let current_user = env::var("USER").unwrap();
     let user = cli.value_of("user")
-        .unwrap_or_else(|| current_user.as_str())
+        .unwrap_or(env::var("USER").unwrap().as_str())
         .to_owned();
     let nodes = cli.value_of("nodes").unwrap();
     let command = cli.value_of("command").unwrap().to_owned();
-
     let nodes_vec = create_nodes_vector(nodes);
-    let nodes_count = nodes_vec.len();
 
     let num_cpus = num_cpus::get();
 
     let (tx, rx) = channel();
     let pool = ThreadPool::new(num_cpus);
 
-    for i in nodes_vec {
+    for i in &nodes_vec {
         let user = user.clone();
         let command = command.clone();
         let tx = tx.clone();
+        let i = i.clone();
         pool.execute(move || {
                          println!("Launching command on node {}", i);
                          let mut cmd =
-                             Command::new(user.to_string(), i.to_string(), command.to_string());
+                         Command::new(&user,
+                                      &i,
+                                      &command);
                          cmd.run();
                          tx.send(cmd).unwrap();
                      });
     }
 
-    for t in rx.iter().take(nodes_count) {
+    for t in rx.iter().take(nodes_vec.len()) {
         println!("{}", t);
     }
     println!("Done");

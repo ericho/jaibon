@@ -38,3 +38,19 @@ pub fn create_cli() -> App<'static, 'static> {
         .arg(nodes)
         .arg(command)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn check_created_cli() {
+        let cli = create_cli();
+        assert_eq!(cli.get_name(), "jaibon");
+        let args = vec!["jaibon", "-u", "user", "-c", "mycmd", "-n", "nodes"];
+        let matches = cli.get_matches_from(args);
+        assert_eq!(matches.value_of("user"), Some("user"));
+        assert_eq!(matches.value_of("command"), Some("mycmd"));
+        assert_eq!(matches.value_of("nodes"), Some("nodes"));
+    }
+}
