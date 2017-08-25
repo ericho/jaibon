@@ -32,6 +32,7 @@ fn main() {
         .to_owned();
     let nodes = cli.value_of("nodes").unwrap();
     let command = cli.value_of("command").unwrap().to_owned();
+    let background = cli.is_present("background");
     let nodes_vec = create_nodes_vector(nodes);
 
     let num_cpus = num_cpus::get();
@@ -49,7 +50,8 @@ fn main() {
                          let mut cmd =
                          Command::new(&user,
                                       &i,
-                                      &command);
+                                      &command,
+                                      background);
                          cmd.run();
                          tx.send(cmd).unwrap();
                      });

@@ -19,10 +19,14 @@ pub struct Command {
     user: String,
     pub result: CommandResult,
     pub printer: CommandPrinter,
+    background: bool,
 }
 
 impl Command {
-    pub fn new(user: &str, node: &str, command: &str) -> Command {
+    pub fn new(user: &str,
+               node: &str,
+               command: &str,
+               background: bool) -> Command {
         Command {
             command: command.to_owned(),
             user: user.to_owned(),
@@ -31,6 +35,7 @@ impl Command {
             stderr: None,
             result: Ok(()),
             printer: CommandPrinter::DefaultPrinter,
+            background: background,
         }
     }
 
@@ -58,7 +63,13 @@ impl Command {
     }
 
     fn create_ssh_command(&self) -> String {
-        let s = format!("ssh {}@{} {}", self.user, self.node, self.command);
+        let cmd: String;
+        if self.background {
+            cmd = format!("nohup {} &> /dev/null &", self.command)
+        } else {
+            cmd = format!("{}", self.command)
+        }
+        let s = format!("ssh {}@{} {}", self.user, self.node, cmd);
         s
     }
 
@@ -96,7 +107,7 @@ mod tests {
 
     #[test]
     fn check_formatter() {
-        let c = Command::new("user", "node", "command");
+        let c = Command::new("user", "node", "command", false);
         assert_eq!("==== Command 'command' in node 'node' ====\nStatus : ok\
                    \nStdout : \nempty\nStderr : \nempty\n",
                    format!("{}", c));
@@ -104,7 +115,7 @@ mod tests {
 
     #[test]
     fn run_basic_command() {
-        let mut c = Command::new("user", "node", "command");
+        let mut c = Command::new("user", "node", "command", false);
         c.run();
         assert_eq!(c.result.is_err(), true);
     }

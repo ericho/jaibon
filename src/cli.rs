@@ -29,6 +29,16 @@ pub fn create_cli() -> App<'static, 'static> {
         .required(true)
         .help("The command to be executed in the remote hosts.");
 
+    let background = Arg::with_name("background")
+        .short("b")
+        .long("background")
+        .takes_value(false)
+        .required(false)
+        .help("Use this flag when a command is intended to be \
+               executed and keep running in the remote system. \
+               for instance, commands like `someprogram &`. This \
+               flag requires that `nohup` is present in the \
+               remote system.");
     // Another commands considered for a future implementation
     // quiet : Just prints the error output
     // json : Print the output in JSON format
@@ -37,6 +47,7 @@ pub fn create_cli() -> App<'static, 'static> {
         .arg(user)
         .arg(nodes)
         .arg(command)
+        .arg(background)
 }
 
 #[cfg(test)]
@@ -47,10 +58,11 @@ mod test {
     fn check_created_cli() {
         let cli = create_cli();
         assert_eq!(cli.get_name(), "jaibon");
-        let args = vec!["jaibon", "-u", "user", "-c", "mycmd", "-n", "nodes"];
+        let args = vec!["jaibon", "-u", "user", "-c", "mycmd", "-n", "nodes", "-b"];
         let matches = cli.get_matches_from(args);
         assert_eq!(matches.value_of("user"), Some("user"));
         assert_eq!(matches.value_of("command"), Some("mycmd"));
         assert_eq!(matches.value_of("nodes"), Some("nodes"));
+        assert_eq!(matches.is_present("background"), true);
     }
 }
