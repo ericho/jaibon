@@ -69,8 +69,7 @@ impl Command {
         } else {
             cmd = format!("{}", self.command)
         }
-        let s = format!("ssh {}@{} {}", self.user, self.node, cmd);
-        s
+        format!("ssh {}@{} {}", self.user, self.node, cmd)
     }
 
     fn default_formatter(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -2,59 +2,89 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
-extern crate clap;
+extern crate structopt;
+#[macro_use]
+extern crate structopt_derive;
 extern crate threadpool;
 extern crate num_cpus;
 
-mod cli;
 mod commands;
 
 use std::env;
 use std::sync::mpsc::channel;
+
 use threadpool::ThreadPool;
 use commands::Command;
+use structopt::StructOpt;
 
+#[derive(StructOpt, Debug)]
+#[structopt(name = "jb", about = "An utility to execute commands in remote hosts through ssh.")]
+struct Opt {
+    #[structopt(short = "u",
+                long = "user",
+                help = "Set the username used to perform the SSH connection \
+                        to the specified hosts. If is not set, the user will \
+                        be retrieved from the $USER environmental variable.")]
+    user: Option<String>,
+
+    #[structopt(short = "n",
+                long = "nodes",
+                help = "Specify the node or list of nodes where the command \
+                        will be executed. The list of nodes should be set in a \
+                        separated comma list format.")]
+    nodes: String,
+
+    #[structopt(short = "c",
+                long = "command",
+                help = "The command to be executed in the remote hosts.")]
+    command: String,
+
+    #[structopt(short = "b",
+                long = "background",
+                help = "Use this flag when a command is intended to be \
+                        executed and keep running in the remote system. \
+                        for instance, commands like `someprogram &`. This \
+                        flag requires that `nohup` is present in the \
+                        remote system.")]
+    background: bool,
+}
 
 fn create_nodes_vector(nodes: &str) -> Vec<String> {
-    let v: Vec<&str> = nodes.split_terminator(',').map(|x| x.trim()).collect();
-    let mut nodes_vec: Vec<String> = Vec::with_capacity(v.len());
-    for node in v {
-        nodes_vec.push(node.to_string());
-    }
-    nodes_vec
+    nodes.split_terminator(',')
+        .map(|x| x.trim().to_string())
+        .collect()
 }
 
 fn main() {
-    let cli = cli::create_cli().get_matches();
+    let opts = Opt::from_args();
 
-    let user = cli.value_of("user")
-        .unwrap_or(env::var("USER").unwrap().as_str())
-        .to_owned();
-    let nodes = cli.value_of("nodes").unwrap();
-    let command = cli.value_of("command").unwrap().to_owned();
-    let background = cli.is_present("background");
-    let nodes_vec = create_nodes_vector(nodes);
+    let user = opts.user.unwrap_or(env::var("USER").unwrap().to_string());
+
+    let nodes = opts.nodes;
+    let command = opts.command;
+    let background = opts.background;
+    let nodes_vec = create_nodes_vector(&nodes);
 
     let num_cpus = num_cpus::get();
 
     let (tx, rx) = channel();
     let pool = ThreadPool::new(num_cpus);
 
-    for i in &nodes_vec {
+    for node in &nodes_vec {
         let user = user.clone();
         let command = command.clone();
         let tx = tx.clone();
-        let i = i.clone();
+        let node = node.clone();
         pool.execute(move || {
-                         println!("Launching command on node {}", i);
-                         let mut cmd =
-                         Command::new(&user,
-                                      &i,
-                                      &command,
-                                      background);
-                         cmd.run();
-                         tx.send(cmd).unwrap();
-                     });
+            println!("Launching command on node {}", node);
+            let mut cmd =
+                Command::new(&user,
+                             &node,
+                             &command,
+                             background);
+            cmd.run();
+            tx.send(cmd).unwrap();
+        });
     }
 
     for t in rx.iter().take(nodes_vec.len()) {
